@@ -1,12 +1,12 @@
-import javax.xml.crypto.dsig.keyinfo.KeyValue;
-import java.math.RoundingMode;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.Stack;
+import java.util.*;
 public class Main {
+    static String exp;
+
     public static void main(String[] args) {
-        String exp;
+
         System.out.println("Calculator");
         System.out.println("=".repeat(100) + "\n");
         System.out.println("Supports [0-9], [()], [+-*/]");
@@ -21,7 +21,7 @@ public class Main {
                 System.out.println("Goodbye!");
                 break;
             }
-            if (exp.toLowerCase().contains("help")){
+            if (exp.toLowerCase().contains("help")) {
                 System.out.println("Calculator");
                 System.out.println("=".repeat(100) + "\n");
                 System.out.println("Supports [0-9], [()], [+-*/], [^]");
@@ -38,18 +38,20 @@ public class Main {
                 System.out.println("Error: Expression has unmatched brackets.\n");
                 continue;
             }
-            System.out.println(evaluateInfix(exp));
+            System.out.println(evaluateRPN(infixToRPN(exp)));
+        }
     }
-    }
-    public  static boolean isValidExpression(String exp){
+
+    public static boolean isValidExpression(String exp) {
         String valid = "0123456789+-*/().^";
         for (int i = 0; i < exp.length(); i++) {
-            if(!valid.contains(exp.charAt(i) + "")){
+            if (!valid.contains(exp.charAt(i) + "")) {
                 return false;
             }
         }
         return true;
     }
+
     public static boolean hasMatchedBrackets(String exp) {
         String ex = exp.replaceAll("[^()]", "");
         while (ex.length() > 2) {
@@ -60,12 +62,9 @@ public class Main {
         }
         return ex.equals("()") || ex.equals("");
     }
-    public static double evaluateInfix(String infixExpression) {
-        String rpnExpression = infixToRPN(infixExpression);
-        return evaluateRPN(rpnExpression);
-    }
 
-    public static double evaluateRPN(String expression) {
+
+    public static int evaluateRPN(String expression) {
         String[] tokens = expression.split(" ");
         Stack<Integer> stack = new Stack<>();
 
@@ -83,59 +82,63 @@ public class Main {
         return stack.pop();
     }
 
+    private static final Map<Character, Integer> precedence = new HashMap<>();
+
+    static {
+        precedence.put('(', 0);
+        precedence.put(')', 0);
+        precedence.put('+', 1);
+        precedence.put('-', 1);
+        precedence.put('*', 2);
+        precedence.put('/', 2);
+        precedence.put('^', 3);
+    }
+
     public static String infixToRPN(String infixExpression) {
         StringBuilder rpnExpression = new StringBuilder();
         Stack<Character> operatorStack = new Stack<>();
 
-        for (int i = 0; i < infixExpression.length(); i++) {
-            char c = infixExpression.charAt(i);
+        StringBuilder currentNumber = new StringBuilder();
+        for (char c : infixExpression.toCharArray()) {
+            if (Character.isWhitespace(c)) {
+                continue;
+            } else if (Character.isDigit(c)) {
+                currentNumber.append(c);
+            } else {
+                if (currentNumber.length() > 0) {
+                    rpnExpression.append(currentNumber.toString()).append(" ");
+                    currentNumber.setLength(0);
+                }
 
-            if (isOperand(c)) {
-                rpnExpression.append(c);
-                rpnExpression.append(' ');
-            } else if (isOperator(c)) {
-                while (!operatorStack.isEmpty() && precedence(operatorStack.peek()) >= precedence(c)) {
-                    rpnExpression.append(operatorStack.pop());
-                    rpnExpression.append(' ');
-                }
-                operatorStack.push(c);
-            } else if (c == '(') {
-                operatorStack.push(c);
-            } else if (c == ')') {
-                while (!operatorStack.isEmpty() && operatorStack.peek() != '(') {
-                    rpnExpression.append(operatorStack.pop());
-                    rpnExpression.append(' ');
-                }
-                if (!operatorStack.isEmpty() && operatorStack.peek() == '(') {
-                    operatorStack.pop();
+                if (c == '(') {
+                    operatorStack.push(c);
+                } else if (c == ')') {
+                    while (!operatorStack.isEmpty() && operatorStack.peek() != '(') {
+                        rpnExpression.append(operatorStack.pop()).append(" ");
+                    }
+                    if (!operatorStack.isEmpty() && operatorStack.peek() == '(') {
+                        operatorStack.pop();
+                    }
+                } else if (precedence.containsKey(c)) {
+                    while (!operatorStack.isEmpty() && precedence.get(c) <= precedence.get(operatorStack.peek())) {
+                        rpnExpression.append(operatorStack.pop()).append(" ");
+                    }
+                    operatorStack.push(c);
                 }
             }
         }
 
+        if (currentNumber.length() > 0) {
+            rpnExpression.append(currentNumber.toString()).append(" ");
+        }
+
         while (!operatorStack.isEmpty()) {
-            rpnExpression.append(operatorStack.pop());
-            rpnExpression.append(' ');
+            rpnExpression.append(operatorStack.pop()).append(" ");
         }
 
         return rpnExpression.toString().trim();
     }
 
-    private static boolean isOperand(char c) {
-        return Character.isLetterOrDigit(c);
-    }
-
-    private static boolean isOperator(char c) {
-        return c == '+' || c == '-' || c == '*' || c == '/';
-    }
-
-    private static int precedence(char operator) {
-        if (operator == '+' || operator == '-')
-            return 1;
-        else if (operator == '*' || operator == '/')
-            return 2;
-        else
-            return -1;
-    }
 
     public static int performOperation(String operator, int num1, int num2) {
         switch (operator) {
@@ -160,7 +163,4 @@ public class Main {
             return false;
         }
     }
-
-
-
 }
