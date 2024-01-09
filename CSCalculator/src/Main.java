@@ -22,7 +22,7 @@ public class Main {
                     continue;
                 }
                 if (expression.equals("")){
-                    System.out.println("Error: Empty Expression")
+                    System.out.println("Error: Empty Expression.\n");
                     continue;
                 }
                 if (!isValidExpression(expression)) {
