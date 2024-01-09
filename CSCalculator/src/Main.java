@@ -1,71 +1,72 @@
-import java.util.ArrayList;
-import java.util.Scanner;
-import java.util.Stack;
 import java.util.*;
+
 public class Main {
-    static String exp;
-
     public static void main(String[] args) {
+        try (Scanner input = new Scanner(System.in)) {
+            System.out.println("Calculator");
+            System.out.println("=".repeat(100) + "\n");
+            System.out.println("Supports [0-9], [()], [+-*/]");
+            System.out.println("Type 'exit' to terminate the program");
+            System.out.println("Type 'help' to display the help manual");
+            System.out.println("Note: Calculator does not support decimal operations.");
 
-        System.out.println("Calculator");
-        System.out.println("=".repeat(100) + "\n");
-        System.out.println("Supports [0-9], [()], [+-*/]");
-        System.out.println("Type 'exit' to terminate the program");
-        System.out.println("Type 'help' to display the help manual");
-        System.out.println("Note: Calculator does not support decimal operations.");
-        Scanner input = new Scanner(System.in);
-        while (true) {
-            System.out.print("Input expression: \n> ");
-            exp = input.nextLine();
-            if (exp.toLowerCase().contains("exit")) {
-                System.out.println("Goodbye!");
-                break;
+            while (true) {
+                System.out.print("Input expression: \n> ");
+                String expression = input.nextLine();
+                if (expression.toLowerCase().contains("exit")) {
+                    System.out.println("Goodbye!");
+                    break;
+                }
+                if (expression.toLowerCase().contains("help")) {
+                    displayHelpManual();
+                    continue;
+                }
+                if (!isValidExpression(expression)) {
+                    System.out.println("Error: Please enter a valid expression.\n");
+                    continue;
+                }
+                if (!hasMatchedBrackets(expression)) {
+                    System.out.println("Error: Expression has unmatched brackets.\n");
+                    continue;
+                }
+                System.out.println(evaluateExpression(expression));
             }
-            if (exp.toLowerCase().contains("help")) {
-                System.out.println("Calculator");
-                System.out.println("=".repeat(100) + "\n");
-                System.out.println("Supports [0-9], [()], [+-*/], [^]");
-                System.out.println("Type 'exit' to terminate the program");
-                System.out.println("Type 'help' to display the help manual");
-                System.out.println("Note: Calculator does not support decimal operations.");
-                continue;
-            }
-            if (!isValidExpression(exp)) {
-                System.out.println("Error: Please enter a valid expression.\n");
-                continue;
-            }
-            if (!hasMatchedBrackets(exp)) {
-                System.out.println("Error: Expression has unmatched brackets.\n");
-                continue;
-            }
-            System.out.println(evaluateRPN(infixToRPN(exp)));
         }
     }
 
-    public static boolean isValidExpression(String exp) {
-        String valid = "0123456789+-*/().^";
-        for (int i = 0; i < exp.length(); i++) {
-            if (!valid.contains(exp.charAt(i) + "")) {
+    public static void displayHelpManual() {
+        System.out.println("Calculator");
+        System.out.println("=".repeat(100) + "\n");
+        System.out.println("Supports [0-9], [()], [+-*/], [^]");
+        System.out.println("Type 'exit' to terminate the program");
+        System.out.println("Type 'help' to display the help manual");
+        System.out.println("Note: Calculator does not support decimal operations.");
+    }
+
+    public static boolean isValidExpression(String expression) {
+        String validChars = "0123456789+-*/().^";
+        for (char c : expression.toCharArray()) {
+            if (!validChars.contains(String.valueOf(c))) {
                 return false;
             }
         }
         return true;
     }
 
-    public static boolean hasMatchedBrackets(String exp) {
-        String ex = exp.replaceAll("[^()]", "");
-        while (ex.length() > 2) {
-            ex = ex.replaceAll("\\(\\)", "");
-            if (!ex.contains("()")) {
+    public static boolean hasMatchedBrackets(String expression) {
+        String brackets = expression.replaceAll("[^()]", "");
+        while (brackets.length() > 2) {
+            brackets = brackets.replaceAll("\\(\\)", "");
+            if (!brackets.contains("()")) {
                 return false;
             }
         }
-        return ex.equals("()") || ex.equals("");
+        return brackets.equals("()") || brackets.isEmpty();
     }
 
-
-    public static int evaluateRPN(String expression) {
-        String[] tokens = expression.split(" ");
+    public static int evaluateExpression(String expression) {
+        String rpnExpression = infixToRPN(expression);
+        String[] tokens = rpnExpression.split(" ");
         Stack<Integer> stack = new Stack<>();
 
         for (String token : tokens) {
@@ -106,7 +107,7 @@ public class Main {
                 currentNumber.append(c);
             } else {
                 if (currentNumber.length() > 0) {
-                    rpnExpression.append(currentNumber.toString()).append(" ");
+                    rpnExpression.append(currentNumber).append(" ");
                     currentNumber.setLength(0);
                 }
 
@@ -129,7 +130,7 @@ public class Main {
         }
 
         if (currentNumber.length() > 0) {
-            rpnExpression.append(currentNumber.toString()).append(" ");
+            rpnExpression.append(currentNumber).append(" ");
         }
 
         while (!operatorStack.isEmpty()) {
@@ -138,7 +139,6 @@ public class Main {
 
         return rpnExpression.toString().trim();
     }
-
 
     public static int performOperation(String operator, int num1, int num2) {
         switch (operator) {
@@ -149,6 +149,9 @@ public class Main {
             case "*":
                 return num1 * num2;
             case "/":
+                if (num2 == 0) {
+                    throw new ArithmeticException("Division by zero is not allowed.");
+                }
                 return num1 / num2;
             default:
                 throw new IllegalArgumentException("Invalid operator: " + operator);
@@ -157,7 +160,7 @@ public class Main {
 
     public static boolean isNumeric(String str) {
         try {
-            Double.parseDouble(str);
+            Integer.parseInt(str);
             return true;
         } catch (NumberFormatException e) {
             return false;
