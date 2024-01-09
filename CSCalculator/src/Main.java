@@ -21,6 +21,10 @@ public class Main {
                     displayHelpManual();
                     continue;
                 }
+                if (expression.equals("")){
+                    System.out.println("Error: Empty Expression")
+                    continue;
+                }
                 if (!isValidExpression(expression)) {
                     System.out.println("Error: Please enter a valid expression.\n");
                     continue;
